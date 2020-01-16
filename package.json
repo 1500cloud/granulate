@@ -1,0 +1,70 @@
+{
+  "name": "@1500cloud/granulate",
+  "version": "0.0.1",
+  "description": "A web worker for splitting media files into grains",
+  "main": "dist/index.js",
+  "scripts": {
+    "prepublishOnly": "rm -rf dist; npm run-script build",
+    "build": "make",
+    "dev": "concurrently npm:dev:*",
+    "dev:jest": "jest --watch",
+    "dev:eslint": "esw . --ext .js -w",
+    "dev:webpack": "NODE_ENV=development webpack-dev-server",
+    "test": "concurrently npm:test:*",
+    "test:jest": "jest",
+    "test:eslint": "eslint . --ext .js"
+  },
+  "dependencies": {},
+  "devDependencies": {
+    "concurrently": "^5.0.0",
+    "eslint": "^6.5.1",
+    "eslint-config-prettier": "^6.4.0",
+    "eslint-plugin-prettier": "^3.1.1",
+    "eslint-watch": "^6.0.1",
+    "exports-loader": "^0.7.0",
+    "file-loader": "^5.0.2",
+    "jest": "^24.9.0",
+    "prettier": "^1.18.2",
+    "webpack": "^4.41.5",
+    "webpack-cli": "^3.3.10",
+    "webpack-dev-server": "^3.10.1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/1500cloud/granulate.git"
+  },
+  "author": "Chris Northwood",
+  "license": "LGPL-2.1-or-later",
+  "bugs": {
+    "url": "https://github.com/1500cloud/granulate/issues"
+  },
+  "homepage": "https://github.com/1500cloud/granulate#readme",
+  "eslintConfig": {
+    "parserOptions": {
+      "ecmaVersion": 8,
+      "sourceType": "module"
+    },
+    "extends": [
+      "plugin:prettier/recommended"
+    ],
+    "env": {
+      "worker": true
+    }
+  },
+  "eslintIgnore": [
+    "dist",
+    "src/granulate.js"
+  ],
+  "jest": {
+    "testEnvironment": "jsdom",
+    "testPathIgnorePatterns": [
+      "/node_modules/",
+      "testHelpers",
+      "dist"
+    ]
+  },
+  "prettier": {
+    "trailingComma": "all",
+    "printWidth": 100
+  }
+}

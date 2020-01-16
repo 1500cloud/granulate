@@ -1,0 +1,6 @@
+dist
+src/granulate.js
+src/granulate.wasm
+node_modules
+yarn.lock
+yarn-error.log
