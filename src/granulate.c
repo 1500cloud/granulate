@@ -1,10 +1,12 @@
 #include <libavformat/avformat.h>
-#include <libavutil/error.h>
+#include <libavutil/avutil.h>
 
 AVFormatContext *format_context;
 
-char *init(char *file_path) {
+const char *init(char *file_path) {
     format_context = avformat_alloc_context();
+    format_context->probesize = INT_MAX;
+    format_context->max_analyze_duration = INT_MAX;
     int open_success = avformat_open_input(&format_context, file_path, NULL, NULL);
     if (open_success != 0) {
         char *err = (char*) malloc(AV_ERROR_MAX_STRING_SIZE * sizeof(char));
@@ -24,4 +26,109 @@ char *init(char *file_path) {
 
 int num_streams() {
     return format_context->nb_streams;
+}
+
+int is_stream_video(int stream) {
+    return format_context->streams[stream]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO;
+}
+
+int is_stream_audio(int stream) {
+    return format_context->streams[stream]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO;
+}
+
+int frame_rate_numerator(int stream) {
+    return is_stream_audio(stream)
+        ? format_context->streams[stream]->codecpar->sample_rate
+        : format_context->streams[stream]->r_frame_rate.num;
+}
+
+int frame_rate_denominator(int stream) {
+    return is_stream_audio(stream)
+        ? format_context->streams[stream]->codecpar->frame_size || 1
+        : format_context->streams[stream]->r_frame_rate.den;
+}
+
+int sample_rate_numerator(int stream) {
+    return format_context->streams[stream]->codecpar->sample_rate;
+}
+
+int sample_rate_denominator(int stream) {
+    return 1;
+}
+
+int num_channels(int stream) {
+    return format_context->streams[stream]->codecpar->channels;
+}
+
+const char *audio_channel_name(int stream, int channel) {
+    return av_get_channel_description(av_channel_layout_extract_channel(format_context->streams[stream]->codecpar->channel_layout, channel));
+}
+
+const char *audio_channel_identifier(int stream, int channel) {
+    switch (av_channel_layout_extract_channel(format_context->streams[stream]->codecpar->channel_layout, channel)) {
+        case AV_CH_FRONT_LEFT:
+        case AV_CH_STEREO_LEFT:
+            return "L";
+        case AV_CH_FRONT_RIGHT:
+        case AV_CH_STEREO_RIGHT:
+            return "R";
+        case AV_CH_FRONT_CENTER:
+            return "C";
+        case AV_CH_LOW_FREQUENCY:
+            return "LFE";
+        case AV_CH_BACK_LEFT:
+            return "Lrs";
+        case AV_CH_BACK_RIGHT:
+            return "Rrs";
+        case AV_CH_FRONT_LEFT_OF_CENTER:
+            return "Lc";
+        case AV_CH_FRONT_RIGHT_OF_CENTER:
+            return "Rc";
+        case AV_CH_SIDE_LEFT:
+            return "Lss";
+        case AV_CH_SIDE_RIGHT:
+            return "Rss";
+        default: {
+            char *channelId = (char*) malloc(4 * sizeof(char));
+            sprintf(channelId, "U%02d", channel + 1);
+            return channelId;
+        }
+    }
+}
+
+int frame_height(int stream) {
+    return format_context->streams[stream]->codecpar->height;
+}
+
+int frame_width(int stream) {
+    return format_context->streams[stream]->codecpar->width;
+}
+
+const char *interlace_mode(int stream) {
+    switch (format_context->streams[stream]->codecpar->field_order) {
+        case AV_FIELD_PROGRESSIVE:
+            return "progressive";
+        case AV_FIELD_TT:
+            return "interlaced_tff";
+        case AV_FIELD_BB:
+            return "interlaced_bff";
+        default:
+            return "";
+    }
+}
+
+const char *colorspace(int stream) {
+    return av_get_colorspace_name(format_context->streams[stream]->codecpar->color_space);
+}
+
+const char *transferCharacteristic(int stream) {
+    switch (format_context->streams[stream]->codecpar->color_trc) {
+        case AVCOL_TRC_SMPTE2084:
+        case AVCOL_TRC_SMPTEST2084:
+            return "PQ";
+        case AVCOL_TRC_ARIB_STD_B67:
+            return "HLG";
+        default:
+            return "";
+    }
 }

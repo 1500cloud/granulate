@@ -13,11 +13,29 @@ src/granulate.js: src/granulate.c
 		-O2 \
 		-I/ffmpeg-$(ffmpeg_version)/ \
 		-s ENVIRONMENT=worker \
+		-s ALLOW_MEMORY_GROWTH=1 \
 		-s MODULARIZE=1 \
 		-s FORCE_FILESYSTEM=1 \
 		-lworkerfs.js \
 		-s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "cwrap", "FS"]' \
-		-s EXPORTED_FUNCTIONS='["_init", "_num_streams"]'
+		-s EXPORTED_FUNCTIONS='[\
+			"_init", \
+		 	"_num_streams", \
+		 	"_is_stream_video", \
+		 	"_is_stream_audio", \
+		 	"_frame_rate_numerator", \
+		 	"_frame_rate_denominator", \
+		 	"_sample_rate_numerator", \
+		 	"_sample_rate_denominator", \
+		 	"_num_channels", \
+		 	"_audio_channel_name", \
+		 	"_audio_channel_identifier", \
+		 	"_frame_height", \
+		 	"_frame_width", \
+		 	"_interlace_mode", \
+		 	"_colorspace", \
+		 	"_transferCharacteristic" \
+		]'
 
 clean:
 	rm -rf dist src/granulate.js src/granulate.wasm
