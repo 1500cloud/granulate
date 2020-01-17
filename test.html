@@ -5,9 +5,23 @@
     <title>Granulate test harness</title>
 </head>
 <body>
-<input type="file">
+<input id="picker" type="file">
 <script>
+  (function() {
+    const picker = document.getElementById("picker");
     const worker = new Worker("dist/main.js");
+    picker.addEventListener("change", () => {
+      if (picker.value !== "") {
+        worker.postMessage({ type: "INIT", file: picker.files[0] });
+      }
+    });
+    worker.addEventListener("message", (ev) => {
+      const p = document.createElement("p");
+      p.textContent = JSON.stringify(ev.data);
+      document.body.appendChild(p);
+    });
+    worker.addEventListener("error", ev => console.error(ev));
+  })();
 </script>
 </body>
 </html>

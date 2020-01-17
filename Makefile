@@ -14,7 +14,10 @@ src/granulate.js: src/granulate.c
 		-I/ffmpeg-$(ffmpeg_version)/ \
 		-s ENVIRONMENT=worker \
 		-s MODULARIZE=1 \
-		-s EXPORTED_FUNCTIONS='["_helloWorld"]'
+		-s FORCE_FILESYSTEM=1 \
+		-lworkerfs.js \
+		-s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "cwrap", "FS"]' \
+		-s EXPORTED_FUNCTIONS='["_init", "_num_streams"]'
 
 clean:
 	rm -rf dist src/granulate.js src/granulate.wasm
