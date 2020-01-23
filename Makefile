@@ -20,6 +20,8 @@ src/granulate.js: src/granulate.c
 		-s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "cwrap", "FS"]' \
 		-s EXPORTED_FUNCTIONS='[\
 			"_init", \
+		 	"_read_frame", \
+		 	"_frame_free", \
 		 	"_num_streams", \
 		 	"_is_stream_video", \
 		 	"_is_stream_audio", \
@@ -34,7 +36,11 @@ src/granulate.js: src/granulate.c
 		 	"_frame_width", \
 		 	"_interlace_mode", \
 		 	"_colorspace", \
-		 	"_transferCharacteristic" \
+		 	"_transfer_characteristic", \
+		 	"_stream_index", \
+		 	"_frame_data_size", \
+		 	"_frame_data_ptr", \
+		 	"_is_key_frame" \
 		]'
 
 clean:

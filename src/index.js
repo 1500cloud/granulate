@@ -2,6 +2,15 @@ import granulate from "./granulate.js";
 import granulateModule from "./granulate.wasm";
 
 let Module;
+let grainBuffer;
+
+self.onmessage = ev => {
+  if (ev.data.type === "INIT") {
+    init(ev.data.file);
+  } else if (ev.data.type === "NEXT_GRAIN") {
+    nextGrain();
+  }
+};
 
 function init(file) {
   Module = granulate({
@@ -15,6 +24,8 @@ function init(file) {
     if (initError !== "") {
       self.postMessage({ type: "INIT_FAILED", error: initError });
     } else {
+      grainBuffer = {};
+      streamIndexes().forEach(i => (grainBuffer[i] = []));
       self.postMessage({
         type: "INIT_COMPLETE",
         streams: streamMetadata(),
@@ -23,13 +34,62 @@ function init(file) {
   });
 }
 
+function nextGrain() {
+  // TODO: containers for long GOP
+  // TODO: timing information
+  // TODO: MIME type
+  const readFrameError = Module.ccall("read_frame", "string", [], []);
+  if (readFrameError === "End of file") {
+    if (Object.keys(grainBuffer).length === 0) {
+      self.postMessage({ type: "EOF" });
+    } else {
+      const streamIndex = Object.keys(grainBuffer)[0];
+      self.postMessage({ type: "GRAIN", streamIndex, data: new Blob(grainBuffer[streamIndex]) });
+      delete grainBuffer[streamIndex];
+    }
+    return;
+  }
+
+  if (readFrameError !== "") {
+    self.postMessage({ type: "ERROR", error: readFrameError });
+    return;
+  }
+
+  const frameDataPtr = Module._frame_data_ptr();
+  const frame = Module.HEAPU8.slice(frameDataPtr, frameDataPtr + Module._frame_data_size());
+  const streamIndex = Module._stream_index();
+  const isKeyframe = Module._is_key_frame();
+  let needMoreFrames = false;
+  if (isKeyframe) {
+    if (grainBuffer[streamIndex].length === 1) {
+      self.postMessage({ type: "GRAIN", streamIndex, data: new Blob(grainBuffer[streamIndex]) });
+    } else if (grainBuffer[streamIndex].length > 1) {
+      // This grain is a GOP
+      grainBuffer[streamIndex].push(frame);
+      self.postMessage({ type: "GRAIN", streamIndex, data: new Blob(grainBuffer[streamIndex]) });
+    } else {
+      needMoreFrames = true;
+    }
+    grainBuffer[streamIndex] = [frame];
+  } else {
+    grainBuffer[streamIndex].push(frame);
+    needMoreFrames = true;
+  }
+  Module._frame_free();
+  if (needMoreFrames) {
+    nextGrain();
+  }
+}
+
+const streamIndexes = () => [...Array(Module._num_streams()).keys()];
+
 const streamMetadata = () =>
-  [...Array(Module._num_streams()).keys()].map(streamIndex => {
+  streamIndexes().map(streamIndex => {
     if (Module._is_stream_video(streamIndex)) {
       const interlaceMode = Module.ccall("interlace_mode", "string", ["number"], [streamIndex]);
       const colorspace = Module.ccall("colorspace", "string", ["number"], [streamIndex]);
       const transferCharacteristic = Module.ccall(
-        "transferCharacteristic",
+        "transfer_characteristic",
         "string",
         ["number"],
         [streamIndex],
@@ -79,13 +139,3 @@ const streamMetadata = () =>
       return { format: "urn:x-nmos:format:data" };
     }
   });
-
-function nextGrain() {}
-
-self.onmessage = ev => {
-  if (ev.data.type === "INIT") {
-    init(ev.data.file);
-  } else if (ev.data.type === "NEXT_GRAIN") {
-    nextGrain();
-  }
-};

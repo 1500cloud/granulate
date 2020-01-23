@@ -1,7 +1,9 @@
 #include <libavformat/avformat.h>
 #include <libavutil/avutil.h>
+#include <stdbool.h>
 
 AVFormatContext *format_context;
+AVPacket *packet;
 
 const char *init(char *file_path) {
     format_context = avformat_alloc_context();
@@ -21,18 +23,38 @@ const char *init(char *file_path) {
         return err;
     }
 
+    packet = av_packet_alloc();
+    if (packet == NULL) {
+        return "failed to allocate memory for packet";
+    }
+
     return "";
+}
+
+const char *read_frame() {
+    int read_frame_success = av_read_frame(format_context, packet);
+    if (read_frame_success < 0) {
+        char *err = (char*) malloc(AV_ERROR_MAX_STRING_SIZE * sizeof(char));
+        av_strerror(read_frame_success, err, AV_ERROR_MAX_STRING_SIZE);
+        return err;
+    }
+
+    return "";
+}
+
+void frame_free() {
+    av_packet_unref(packet);
 }
 
 int num_streams() {
     return format_context->nb_streams;
 }
 
-int is_stream_video(int stream) {
+bool is_stream_video(int stream) {
     return format_context->streams[stream]->codecpar->codec_type == AVMEDIA_TYPE_VIDEO;
 }
 
-int is_stream_audio(int stream) {
+bool is_stream_audio(int stream) {
     return format_context->streams[stream]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO;
 }
 
@@ -121,14 +143,29 @@ const char *colorspace(int stream) {
     return av_get_colorspace_name(format_context->streams[stream]->codecpar->color_space);
 }
 
-const char *transferCharacteristic(int stream) {
+const char *transfer_characteristic(int stream) {
     switch (format_context->streams[stream]->codecpar->color_trc) {
         case AVCOL_TRC_SMPTE2084:
-        case AVCOL_TRC_SMPTEST2084:
             return "PQ";
         case AVCOL_TRC_ARIB_STD_B67:
             return "HLG";
         default:
             return "";
     }
+}
+
+int stream_index() {
+    return packet->stream_index;
+}
+
+int frame_data_size() {
+    return packet->size;
+}
+
+uint8_t *frame_data_ptr() {
+    return packet->data;
+}
+
+bool is_key_frame() {
+    return (packet->flags & AV_PKT_FLAG_KEY) == AV_PKT_FLAG_KEY;
 }

@@ -1,27 +1,70 @@
 <!DOCTYPE html>
 <html lang="en">
-<head>
-    <meta charset="UTF-8">
+  <head>
+    <meta charset="UTF-8" />
     <title>Granulate test harness</title>
-</head>
-<body>
-<input id="picker" type="file">
-<script>
-  (function() {
-    const picker = document.getElementById("picker");
-    const worker = new Worker("dist/main.js");
-    picker.addEventListener("change", () => {
-      if (picker.value !== "") {
-        worker.postMessage({ type: "INIT", file: picker.files[0] });
-      }
-    });
-    worker.addEventListener("message", (ev) => {
-      const p = document.createElement("p");
-      p.textContent = JSON.stringify(ev.data);
-      document.body.appendChild(p);
-    });
-    worker.addEventListener("error", ev => console.error(ev));
-  })();
-</script>
-</body>
+  </head>
+  <body>
+    <p><input id="picker" type="file" /></p>
+    <p><button id="next-frame" disabled>Next frame</button></p>
+    <ul id="stream-metadata"></ul>
+    <script>
+      (function() {
+        const picker = document.getElementById("picker");
+        const nextFrameButton = document.getElementById("next-frame");
+        const streamMetadata = document.getElementById("stream-metadata");
+        const worker = new Worker("dist/main.js");
+        picker.addEventListener("change", () => {
+          if (picker.value !== "") {
+            worker.postMessage({ type: "INIT", file: picker.files[0] });
+          }
+        });
+        nextFrameButton.addEventListener("click", () => {
+          worker.postMessage({ type: "NEXT_GRAIN" });
+        });
+        worker.addEventListener("message", ev => {
+          if (ev.data.type === "INIT_COMPLETE") {
+            nextFrameButton.disabled = false;
+            ev.data.streams.forEach((metadata, streamIndex) => {
+              const li = document.createElement("li");
+              const dl = document.createElement("dl");
+              const metadataLabel = document.createElement("dt");
+              metadataLabel.textContent = "Metadata";
+              const metadataContent = document.createElement("dd");
+              metadataContent.textContent = JSON.stringify(metadata);
+              const grainCountLabel = document.createElement("dt");
+              grainCountLabel.textContent = "Grain Count";
+              const grainCount = document.createElement("dd");
+              grainCount.id = `stream-${streamIndex}-grain-count`;
+              grainCount.textContent = "0";
+              const bytesLabel = document.createElement("dt");
+              bytesLabel.textContent = "Bytes";
+              const bytes = document.createElement("dd");
+              bytes.textContent = "0";
+              bytes.id = `stream-${streamIndex}-bytes`;
+              dl.appendChild(metadataLabel);
+              dl.appendChild(metadataContent);
+              dl.appendChild(grainCountLabel);
+              dl.appendChild(grainCount);
+              dl.appendChild(bytesLabel);
+              dl.appendChild(bytes);
+              li.appendChild(dl);
+              streamMetadata.appendChild(li);
+            });
+          } else if (ev.data.type === "GRAIN") {
+            const grainCount = document.getElementById(`stream-${ev.data.streamIndex}-grain-count`);
+            const bytes = document.getElementById(`stream-${ev.data.streamIndex}-bytes`);
+            grainCount.textContent = parseInt(grainCount.textContent, 10) + 1;
+            bytes.textContent = parseInt(bytes.textContent, 10) + ev.data.data.size;
+            worker.postMessage({ type: "NEXT_GRAIN" });
+          } else {
+            const p = document.createElement("p");
+            p.textContent = JSON.stringify(ev.data);
+            document.body.appendChild(p);
+          }
+        });
+        worker.addEventListener("error", ev => console.error(ev));
+      })();
+    </script>
+  </body>
 </html>
