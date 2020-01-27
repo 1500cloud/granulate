@@ -103,6 +103,9 @@ const streamMetadata = () =>
         interlaceMode: interlaceMode === "" ? undefined : interlaceMode,
         colorspace: colorspace === "" ? "unknown" : colorspace,
         transferCharacteristic: colorspace === "" ? undefined : transferCharacteristic,
+        mimeType: mimeTypeFromCodec(
+          Module.ccall("codec_name", "string", ["number"], [streamIndex]),
+        ),
       };
     } else if (Module._is_stream_audio(streamIndex)) {
       return {
@@ -134,8 +137,25 @@ const streamMetadata = () =>
                 ),
               };
         }),
+        mimeType: mimeTypeFromCodec(
+          Module.ccall("codec_name", "string", ["number"], [streamIndex]),
+        ),
       };
     } else {
       return { format: "urn:x-nmos:format:data" };
     }
   });
+
+const mimeTypeFromCodec = codecName => {
+  switch (codecName) {
+    case "h264":
+      return "video/h264";
+    case "mp3":
+      return "audio/mpeg";
+    case "ac3":
+      return "audio/ac3";
+    default:
+      console.warn(`Unknown MIME type for codec name: ${codecName}`);
+      return "";
+  }
+};

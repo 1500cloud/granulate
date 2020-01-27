@@ -58,6 +58,14 @@ bool is_stream_audio(int stream) {
     return format_context->streams[stream]->codecpar->codec_type == AVMEDIA_TYPE_AUDIO;
 }
 
+const char *codec_name(int stream) {
+    const AVCodecDescriptor *descriptor = avcodec_descriptor_get(format_context->streams[stream]->codecpar->codec_id);
+    if (!descriptor) {
+        return "";
+    }
+    return descriptor->name;
+}
+
 int frame_rate_numerator(int stream) {
     return is_stream_audio(stream)
         ? format_context->streams[stream]->codecpar->sample_rate

@@ -20,27 +20,28 @@ src/granulate.js: src/granulate.c
 		-s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "cwrap", "FS"]' \
 		-s EXPORTED_FUNCTIONS='[\
 			"_init", \
-		 	"_read_frame", \
-		 	"_frame_free", \
-		 	"_num_streams", \
-		 	"_is_stream_video", \
-		 	"_is_stream_audio", \
-		 	"_frame_rate_numerator", \
-		 	"_frame_rate_denominator", \
-		 	"_sample_rate_numerator", \
-		 	"_sample_rate_denominator", \
-		 	"_num_channels", \
-		 	"_audio_channel_name", \
-		 	"_audio_channel_identifier", \
-		 	"_frame_height", \
-		 	"_frame_width", \
-		 	"_interlace_mode", \
-		 	"_colorspace", \
-		 	"_transfer_characteristic", \
-		 	"_stream_index", \
-		 	"_frame_data_size", \
-		 	"_frame_data_ptr", \
-		 	"_is_key_frame" \
+			"_read_frame", \
+			"_frame_free", \
+			"_num_streams", \
+			"_is_stream_video", \
+			"_is_stream_audio", \
+			"_codec_name", \
+			"_frame_rate_numerator", \
+			"_frame_rate_denominator", \
+			"_sample_rate_numerator", \
+			"_sample_rate_denominator", \
+			"_num_channels", \
+			"_audio_channel_name", \
+			"_audio_channel_identifier", \
+			"_frame_height", \
+			"_frame_width", \
+			"_interlace_mode", \
+			"_colorspace", \
+			"_transfer_characteristic", \
+			"_stream_index", \
+			"_frame_data_size", \
+			"_frame_data_ptr", \
+			"_is_key_frame" \
 		]'
 
 clean:
