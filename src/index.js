@@ -1,5 +1,10 @@
 import granulate from "./granulate.js";
 import granulateModule from "./granulate.wasm";
+import {
+  add,
+  taiTimestampFromMediaTimestamp,
+  taiTimestampToMediaTimestamp,
+} from "@1500cloud/taitimestamp";
 
 let Module;
 let grainBuffer;
@@ -36,15 +41,13 @@ function init(file) {
 
 function nextGrain() {
   // TODO: containers for long GOP
-  // TODO: timing information
-  // TODO: MIME type
   const readFrameError = Module.ccall("read_frame", "string", [], []);
   if (readFrameError === "End of file") {
     if (Object.keys(grainBuffer).length === 0) {
       self.postMessage({ type: "EOF" });
     } else {
       const streamIndex = Object.keys(grainBuffer)[0];
-      self.postMessage({ type: "GRAIN", streamIndex, data: new Blob(grainBuffer[streamIndex]) });
+      sendGrain(streamIndex);
       delete grainBuffer[streamIndex];
     }
     return;
@@ -56,17 +59,21 @@ function nextGrain() {
   }
 
   const frameDataPtr = Module._frame_data_ptr();
-  const frame = Module.HEAPU8.slice(frameDataPtr, frameDataPtr + Module._frame_data_size());
+  const frame = {
+    data: Module.HEAPU8.slice(frameDataPtr, frameDataPtr + Module._frame_data_size()),
+    ts: taiTimestampFromMediaTimestamp(Module.ccall("frame_ts", "string", [], [])),
+    duration: taiTimestampFromMediaTimestamp(Module.ccall("frame_duration", "string", [], [])),
+  };
   const streamIndex = Module._stream_index();
   const isKeyframe = Module._is_key_frame();
   let needMoreFrames = false;
   if (isKeyframe) {
     if (grainBuffer[streamIndex].length === 1) {
-      self.postMessage({ type: "GRAIN", streamIndex, data: new Blob(grainBuffer[streamIndex]) });
+      sendGrain(streamIndex);
     } else if (grainBuffer[streamIndex].length > 1) {
       // This grain is a GOP
       grainBuffer[streamIndex].push(frame);
-      self.postMessage({ type: "GRAIN", streamIndex, data: new Blob(grainBuffer[streamIndex]) });
+      sendGrain(streamIndex);
     } else {
       needMoreFrames = true;
     }
@@ -79,6 +86,18 @@ function nextGrain() {
   if (needMoreFrames) {
     nextGrain();
   }
+}
+
+function sendGrain(streamIndex) {
+  self.postMessage({
+    type: "GRAIN",
+    streamIndex,
+    data: new Blob(grainBuffer[streamIndex].map(({ data }) => data)),
+    ts: taiTimestampToMediaTimestamp(grainBuffer[streamIndex][0].ts),
+    duration: taiTimestampToMediaTimestamp(
+      grainBuffer[streamIndex].map(({ duration }) => duration).reduce(add),
+    ),
+  });
 }
 
 const streamIndexes = () => [...Array(Module._num_streams()).keys()];

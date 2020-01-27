@@ -15,7 +15,9 @@
     "test:jest": "jest",
     "test:eslint": "eslint . --ext .js"
   },
-  "dependencies": {},
+  "dependencies": {
+    "@1500cloud/taitimestamp": "^0.2.3"
+  },
   "devDependencies": {
     "concurrently": "^5.0.0",
     "eslint": "^6.5.1",
@@ -42,7 +44,7 @@
   "homepage": "https://github.com/1500cloud/granulate#readme",
   "eslintConfig": {
     "parserOptions": {
-      "ecmaVersion": 8,
+      "ecmaVersion": 2020,
       "sourceType": "module"
     },
     "extends": [

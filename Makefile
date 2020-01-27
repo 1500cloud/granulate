@@ -17,7 +17,7 @@ src/granulate.js: src/granulate.c
 		-s MODULARIZE=1 \
 		-s FORCE_FILESYSTEM=1 \
 		-lworkerfs.js \
-		-s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "cwrap", "FS"]' \
+		-s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "FS"]' \
 		-s EXPORTED_FUNCTIONS='[\
 			"_init", \
 			"_read_frame", \
@@ -41,7 +41,9 @@ src/granulate.js: src/granulate.c
 			"_stream_index", \
 			"_frame_data_size", \
 			"_frame_data_ptr", \
-			"_is_key_frame" \
+			"_is_key_frame", \
+			"_frame_ts", \
+			"_frame_duration" \
 		]'
 
 clean:

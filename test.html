@@ -42,20 +42,36 @@
               const bytes = document.createElement("dd");
               bytes.textContent = "0";
               bytes.id = `stream-${streamIndex}-bytes`;
+              const lastTsLabel = document.createElement("dt");
+              lastTsLabel.textContent = "Last Timestamp";
+              const lastTs = document.createElement("dd");
+              lastTs.id = `stream-${streamIndex}-last-ts`;
+              const lastDurationLabel = document.createElement("dt");
+              lastDurationLabel.textContent = "Last Duration";
+              const lastDuration = document.createElement("dd");
+              lastDuration.id = `stream-${streamIndex}-last-duration`;
               dl.appendChild(metadataLabel);
               dl.appendChild(metadataContent);
               dl.appendChild(grainCountLabel);
               dl.appendChild(grainCount);
               dl.appendChild(bytesLabel);
               dl.appendChild(bytes);
+              dl.appendChild(lastTsLabel);
+              dl.appendChild(lastTs);
+              dl.appendChild(lastDurationLabel);
+              dl.appendChild(lastDuration);
               li.appendChild(dl);
               streamMetadata.appendChild(li);
             });
           } else if (ev.data.type === "GRAIN") {
             const grainCount = document.getElementById(`stream-${ev.data.streamIndex}-grain-count`);
             const bytes = document.getElementById(`stream-${ev.data.streamIndex}-bytes`);
+            const lastTs = document.getElementById(`stream-${ev.data.streamIndex}-last-ts`);
+            const lastDuration = document.getElementById(`stream-${ev.data.streamIndex}-last-duration`);
             grainCount.textContent = parseInt(grainCount.textContent, 10) + 1;
             bytes.textContent = parseInt(bytes.textContent, 10) + ev.data.data.size;
+            lastTs.textContent = ev.data.ts;
+            lastDuration.textContent = ev.data.duration;
             worker.postMessage({ type: "NEXT_GRAIN" });
           } else {
             const p = document.createElement("p");

@@ -120,7 +120,7 @@ const char *audio_channel_identifier(int stream, int channel) {
             return "Rss";
         default: {
             char *channelId = (char*) malloc(4 * sizeof(char));
-            sprintf(channelId, "U%02d", channel + 1);
+            snprintf(channelId, 4, "U%02d", channel + 1);
             return channelId;
         }
     }
@@ -176,4 +176,21 @@ uint8_t *frame_data_ptr() {
 
 bool is_key_frame() {
     return (packet->flags & AV_PKT_FLAG_KEY) == AV_PKT_FLAG_KEY;
+}
+
+char ts[20];
+const char* frame_ts() {
+    if (packet->pts == AV_NOPTS_VALUE) {
+        return "";
+    }
+    int64_t frame_time_ns = av_rescale_q(packet->pts, format_context->streams[packet->stream_index]->time_base, av_make_q(1, 1000000000));
+    snprintf(ts, 20, "%lld:%lld", frame_time_ns / 1000000000, frame_time_ns % 1000000000);
+    return ts;
+}
+
+char duration[20];
+const char* frame_duration() {
+    int64_t frame_duration_ns = av_rescale_q(packet->duration, format_context->streams[packet->stream_index]->time_base, av_make_q(1, 1000000000));
+    snprintf(duration, 20, "%lld:%lld", frame_duration_ns / 1000000000, frame_duration_ns % 1000000000);
+    return duration;
 }
