@@ -16,7 +16,7 @@
     "test:eslint": "eslint . --ext .js"
   },
   "dependencies": {
-    "@1500cloud/taitimestamp": "^0.2.3"
+    "@1500cloud/taitimestamp": "^0.2.6"
   },
   "devDependencies": {
     "concurrently": "^5.0.0",

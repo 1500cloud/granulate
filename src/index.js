@@ -2,8 +2,10 @@ import granulate from "./granulate.js";
 import granulateModule from "./granulate.wasm";
 import {
   add,
+  subtract,
   taiTimestampFromMediaTimestamp,
   taiTimestampToMediaTimestamp,
+  taiTimestampToNanoseconds,
 } from "@1500cloud/taitimestamp";
 
 let Module;
@@ -40,7 +42,6 @@ function init(file) {
 }
 
 function nextGrain() {
-  // TODO: containers for long GOP
   const readFrameError = Module.ccall("read_frame", "string", [], []);
   if (readFrameError === "End of file") {
     if (Object.keys(grainBuffer).length === 0) {
@@ -89,10 +90,24 @@ function nextGrain() {
 }
 
 function sendGrain(streamIndex) {
+  let offset = BigInt(4 + 24 * grainBuffer[streamIndex].length);
+  const headerSize = new Uint32Array([grainBuffer[streamIndex].length]);
+  const header = new BigUint64Array(
+    grainBuffer[streamIndex].flatMap(({ data, ts }) => {
+      const packetOffset = offset;
+      const packetSize = BigInt(data.byteLength);
+      offset += packetSize;
+      return [
+        packetOffset,
+        packetSize,
+        taiTimestampToNanoseconds(subtract(ts, grainBuffer[streamIndex][0].ts)),
+      ];
+    }),
+  );
   self.postMessage({
     type: "GRAIN",
     streamIndex,
-    data: new Blob(grainBuffer[streamIndex].map(({ data }) => data)),
+    data: new Blob([headerSize, header, ...grainBuffer[streamIndex].map(({ data }) => data)]),
     ts: taiTimestampToMediaTimestamp(grainBuffer[streamIndex][0].ts),
     duration: taiTimestampToMediaTimestamp(
       grainBuffer[streamIndex].map(({ duration }) => duration).reduce(add),
