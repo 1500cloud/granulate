@@ -13,16 +13,17 @@
         const picker = document.getElementById("picker");
         const nextFrameButton = document.getElementById("next-frame");
         const streamMetadata = document.getElementById("stream-metadata");
-        const worker = new Worker("dist/main.js");
+        const granulateWorker = new Worker("dist/granulate.js");
+        const solidifyWorker = new Worker("dist/solidify.js");
         picker.addEventListener("change", () => {
           if (picker.value !== "") {
-            worker.postMessage({ type: "INIT", file: picker.files[0] });
+            granulateWorker.postMessage({ type: "INIT", file: picker.files[0] });
           }
         });
         nextFrameButton.addEventListener("click", () => {
-          worker.postMessage({ type: "NEXT_GRAIN" });
+          granulateWorker.postMessage({ type: "NEXT_GRAIN" });
         });
-        worker.addEventListener("message", ev => {
+        granulateWorker.addEventListener("message", ev => {
           if (ev.data.type === "INIT_COMPLETE") {
             nextFrameButton.disabled = false;
             ev.data.streams.forEach((metadata, streamIndex) => {
@@ -63,23 +64,33 @@
               li.appendChild(dl);
               streamMetadata.appendChild(li);
             });
+            solidifyWorker.postMessage({ type: "INIT" });
           } else if (ev.data.type === "GRAIN") {
             const grainCount = document.getElementById(`stream-${ev.data.streamIndex}-grain-count`);
             const bytes = document.getElementById(`stream-${ev.data.streamIndex}-bytes`);
             const lastTs = document.getElementById(`stream-${ev.data.streamIndex}-last-ts`);
-            const lastDuration = document.getElementById(`stream-${ev.data.streamIndex}-last-duration`);
+            const lastDuration = document.getElementById(
+              `stream-${ev.data.streamIndex}-last-duration`,
+            );
             grainCount.textContent = parseInt(grainCount.textContent, 10) + 1;
             bytes.textContent = parseInt(bytes.textContent, 10) + ev.data.data.size;
             lastTs.textContent = ev.data.ts;
             lastDuration.textContent = ev.data.duration;
-            worker.postMessage({ type: "NEXT_GRAIN" });
+            granulateWorker.postMessage({ type: "NEXT_GRAIN" });
           } else {
             const p = document.createElement("p");
-            p.textContent = JSON.stringify(ev.data);
+            p.textContent = JSON.stringify({ from: "granulate", ...ev.data });
             document.body.appendChild(p);
           }
         });
-        worker.addEventListener("error", ev => console.error(ev));
+        granulateWorker.addEventListener("error", ev => console.error(ev));
+
+        solidifyWorker.addEventListener("message", ev => {
+          const p = document.createElement("p");
+          p.textContent = JSON.stringify({ from: "solidify", ...ev.data });
+          document.body.appendChild(p);
+        });
+        solidifyWorker.addEventListener("error", ev => console.error(ev));
       })();
     </script>
   </body>

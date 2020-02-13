@@ -1,9 +1,12 @@
 ffmpeg_version = 4.2.2
 
-dist/index.js: src/index.js src/granulate.js
-	NODE_ENV=production node_modules/.bin/webpack
+all: dist/granulate.js dist/solidify.js
 
-src/granulate.js: src/granulate.c
+dist/%.js: %/index.js
+	NODE_ENV=production node_modules/.bin/webpack $< -o $@
+
+granulate/index.js: granulate/granulate.js
+granulate/granulate.js: granulate/granulate.c
 	docker run --mount type=bind,source="$(shell pwd)",target=/build --rm \
 		$(shell docker build -q --build-arg ffmpeg_version=$(ffmpeg_version) .) \
 		/emsdk-master/upstream/emscripten/emcc /ffmpeg-$(ffmpeg_version)/libavutil/libavutil.a \
@@ -46,5 +49,24 @@ src/granulate.js: src/granulate.c
 			"_frame_duration" \
 		]'
 
+solidify/index.js: solidify/solidify.js
+solidify/solidify.js: solidify/solidify.c
+	docker run --mount type=bind,source="$(shell pwd)",target=/build --rm \
+		$(shell docker build -q --build-arg ffmpeg_version=$(ffmpeg_version) .) \
+		/emsdk-master/upstream/emscripten/emcc /ffmpeg-$(ffmpeg_version)/libavutil/libavutil.a \
+		/ffmpeg-$(ffmpeg_version)/libavcodec/libavcodec.a /ffmpeg-$(ffmpeg_version)/libavformat/libavformat.a \
+		$< \
+		-o $@ \
+		-O2 \
+		-I/ffmpeg-$(ffmpeg_version)/ \
+		-s ENVIRONMENT=worker \
+		-s ALLOW_MEMORY_GROWTH=1 \
+		-s MODULARIZE=1 \
+		-s FORCE_FILESYSTEM=1 \
+		-s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "FS"]' \
+		-s EXPORTED_FUNCTIONS='[\
+			"_init" \
+		]'
+
 clean:
-	rm -rf dist src/granulate.js src/granulate.wasm
+	rm -rf dist granulate/granulate.js granulate/granulate.wasm solidify/solidify.js solidify/solidify.wasm

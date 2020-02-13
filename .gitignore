@@ -1,6 +1,8 @@
 dist
-src/granulate.js
-src/granulate.wasm
+granulate/granulate.js
+granulate/granulate.wasm
+solidify/solidify.js
+solidify/solidify.wasm
 node_modules
 yarn.lock
 yarn-error.log

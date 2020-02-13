@@ -10,7 +10,7 @@
     "dev:jest": "jest --watch",
     "dev:eslint": "esw . --ext .js -w",
     "dev:webpack": "NODE_ENV=development webpack-dev-server",
-    "pretest": "make src/granulate.js",
+    "pretest": "make granulate/granulate.js",
     "test": "concurrently npm:test:*",
     "test:jest": "jest",
     "test:eslint": "eslint . --ext .js"
@@ -56,7 +56,7 @@
   },
   "eslintIgnore": [
     "dist",
-    "src/granulate.js"
+    "granulate/granulate.js"
   ],
   "jest": {
     "testEnvironment": "jsdom",

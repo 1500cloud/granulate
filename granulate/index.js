@@ -1,5 +1,3 @@
-import granulate from "./granulate.js";
-import granulateModule from "./granulate.wasm";
 import {
   add,
   subtract,
@@ -7,6 +5,9 @@ import {
   taiTimestampToMediaTimestamp,
   taiTimestampToNanoseconds,
 } from "@1500cloud/taitimestamp";
+
+import granulate from "./granulate.js";
+import granulateModule from "./granulate.wasm";
 
 let Module;
 let grainBuffer;
