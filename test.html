@@ -64,7 +64,7 @@
               li.appendChild(dl);
               streamMetadata.appendChild(li);
             });
-            solidifyWorker.postMessage({ type: "INIT" });
+            solidifyWorker.postMessage({ type: "INIT", streams: ev.data.streams });
           } else if (ev.data.type === "GRAIN") {
             const grainCount = document.getElementById(`stream-${ev.data.streamIndex}-grain-count`);
             const bytes = document.getElementById(`stream-${ev.data.streamIndex}-bytes`);
@@ -77,6 +77,8 @@
             lastTs.textContent = ev.data.ts;
             lastDuration.textContent = ev.data.duration;
             granulateWorker.postMessage({ type: "NEXT_GRAIN" });
+          } else if (ev.data.type === "EOF") {
+            solidifyWorker.postMessage({ type: "FINALISE" });
           } else {
             const p = document.createElement("p");
             p.textContent = JSON.stringify({ from: "granulate", ...ev.data });
@@ -86,9 +88,16 @@
         granulateWorker.addEventListener("error", ev => console.error(ev));
 
         solidifyWorker.addEventListener("message", ev => {
-          const p = document.createElement("p");
-          p.textContent = JSON.stringify({ from: "solidify", ...ev.data });
-          document.body.appendChild(p);
+          if (ev.data.type === "END") {
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(ev.data.blob);
+            a.textContent = "Save file";
+            document.body.appendChild(a);
+          } else {
+            const p = document.createElement("p");
+            p.textContent = JSON.stringify({ from: "solidify", ...ev.data });
+            document.body.appendChild(p);
+          }
         });
         solidifyWorker.addEventListener("error", ev => console.error(ev));
       })();

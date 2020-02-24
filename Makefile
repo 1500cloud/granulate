@@ -65,7 +65,9 @@ solidify/solidify.js: solidify/solidify.c
 		-s FORCE_FILESYSTEM=1 \
 		-s EXTRA_EXPORTED_RUNTIME_METHODS='["ccall", "FS"]' \
 		-s EXPORTED_FUNCTIONS='[\
-			"_init" \
+			"_init", \
+			"_write_header", \
+			"_finalise" \
 		]'
 
 clean:

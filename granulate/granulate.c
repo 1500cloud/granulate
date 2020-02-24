@@ -7,8 +7,13 @@ AVPacket *packet;
 
 const char *init(char *file_path) {
     format_context = avformat_alloc_context();
+    if (format_context == NULL) {
+        return "unable to allocate context";
+    }
+
     format_context->probesize = INT_MAX;
     format_context->max_analyze_duration = INT_MAX;
+
     int open_success = avformat_open_input(&format_context, file_path, NULL, NULL);
     if (open_success != 0) {
         char *err = (char*) malloc(AV_ERROR_MAX_STRING_SIZE * sizeof(char));
